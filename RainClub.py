@@ -1,11 +1,10 @@
 import streamlit as st
 import random
 
-# Configuración de Software Escala Nacional Jerárquico
-st.set_page_config(page_title="RainClub Chile V12.0", page_icon="🇨🇱", layout="wide")
+# Configuración Profesional
+st.set_page_config(page_title="RainClub Chile V12.1", page_icon="🇨🇱", layout="wide")
 
-# --- BASE DE DATOS JERÁRQUICA NACIONAL ---
-# Estructura: Región -> Provincia -> Comunas
+# --- BASE DE DATOS JERÁRQUICA ---
 chile_datos = {
     "Región del Maule": {
         "Provincias": {
@@ -39,28 +38,22 @@ chile_datos = {
 }
 
 # --- ENCABEZADO ---
-st.title("💧 RainClub Chile V12.0")
-st.markdown("### Plataforma de Gestión Hídrica Nacional Inteligente")
+st.title("💧 RainClub Chile V12.1")
+st.markdown("### Plataforma de Gestión Hídrica Nacional")
 st.write("---")
 
-# --- PANEL LATERAL (JERARQUÍA DE UBICACIÓN) ---
-st.sidebar.header("📍 Ubicación Geográfica")
-
-# 1. Selección de Región
+# --- PANEL LATERAL ---
+st.sidebar.header("📍 Ubicación")
 region_sel = st.sidebar.selectbox("Seleccione Región", list(chile_datos.keys()))
-
-# 2. Selección de Provincia (basada en la Región)
 provincias_dict = chile_datos[region_sel]["Provincias"]
 provincia_sel = st.sidebar.selectbox("Seleccione Provincia", list(provincias_dict.keys()))
-
-# 3. Selección de Comuna (basada en la Provincia)
 comuna_sel = st.sidebar.selectbox("Seleccione Comuna", provincias_dict[provincia_sel])
 
 st.sidebar.divider()
 st.sidebar.header("🚜 Datos del Predio")
-has = st.sidebar.number_input("Hectáreas totales", value=1.0)
-dist_h = st.sidebar.number_input("Entre Hileras (m)", value=4.0)
-dist_p = st.sidebar.number_input("Entre Plantas (m)", value=2.0)
+has = st.sidebar.number_input("Hectáreas", min_value=0.1, value=1.0)
+dist_h = st.sidebar.number_input("Hileras (m)", value=4.0)
+dist_p = st.sidebar.number_input("Plantas (m)", value=2.0)
 sistema = st.sidebar.selectbox("Sistema de Riego", ["Goteo (95%)", "Microaspersión (85%)", "Tendida (50%)"])
 
 # --- LÓGICA DE CÁLCULO ---
@@ -71,14 +64,13 @@ litros_totales = (et_actual * plantas_total) / eficiencia
 minutos_riego = (litros_totales / (1.5 * has * 60))
 
 # --- RESULTADOS ---
-st.subheader(f"📊 Reporte: {comuna_sel} ({provincia_sel}), {region_sel}")
-
+st.subheader(f"📊 Reporte: {comuna_sel}, {region_sel}")
 col_info, col_res = st.columns([1, 2])
 
 with col_info:
     st.info("💡 **Análisis de Factibilidad:**")
-    st.write(f"En esta zona sugerimos: **{chile_datos[region_sel]['Sugerencia']}**")
-    st.caption(f"Datos climáticos sincronizados con ET: {et_actual} mm/día")
+    st.write(f"Sugerencia: **{chile_datos[region_sel]['Sugerencia']}**")
+    st.caption(f"Evapotranspiración base: {et_actual} mm/día")
 
 with col_res:
     res1, res2, res3 = st.columns(3)
@@ -86,19 +78,22 @@ with col_res:
     res2.metric("Tiempo Riego", f"{int(minutos_riego)} min")
     res3.metric("Plantas", f"{int(plantas_total)} pl")
 
-# --- MODELO DE NEGOCIO Y PAGOS ---
+# --- MODELO DE NEGOCIO ---
 st.write("---")
-tab1, tab2, tab3 = st.tabs(["💎 Planes", "💳 Pasarelas de Pago", "💰 Mi Comisión"])
+tab1, tab2, tab3 = st.tabs(["💎 Planes", "💳 Pagos", "💰 Ganancia Fundador"])
 
 with tab1:
-    st.success("### **Plan Básico (Gratis)**: Acceso nacional completo.")
-    st.warning("### **Plan Pro ($15.000/mes)**: Alertas WhatsApp y Sensores IoT.")
+    st.success("### Plan Básico (Gratis)")
+    st.write("Acceso a cálculos nacionales y sugerencias de cultivo.")
+    st.warning("### Plan Pro ($15.000/mes)")
+    st.write("Alertas WhatsApp y conexión directa a estaciones Agromet.")
 
 with tab2:
     st.write("#### Medios de Pago:")
-    st.write("💳 Visa | Mastercard | WebPay | PayPal | Google Pay | Apple Pay | Mercado Pago")
-    st.button("PAGAR SUSCRIPCIÓN")
+    st.write("Visa | Mastercard | WebPay | PayPal | Apple Pay | Google Pay | Mercado Pago")
+    st.button("Activar Suscripción")
 
 with tab3:
-    st.write("#### Transparencia de Ingresos:")
-    st.
+    st.info(f"Comisión Desarrollador: **40% ($6.000)** por cada suscripción Pro activa en {comuna_sel}.")
+
+st.info("RainClub Chile V12.1 - Desarrollado para SabíaLab 2026.")
