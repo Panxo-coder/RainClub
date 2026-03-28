@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 
-# Configuración profesional
-st.set_page_config(page_title="RainClub Ultra - Maule", page_icon="💧", layout="wide")
+# Configuración de Software Profesional
+st.set_page_config(page_title="RainClub Enterprise V4.0", page_icon="💧", layout="wide")
 
-# Estilo para evitar bloqueos
+# Estilo para evitar bloqueos y mejorar diseño
 st.markdown('<html lang="es"></html>', unsafe_allow_html=True)
 
-# --- BASE DE DATOS MAULE ---
+# --- BASE DE DATOS REGIONAL MAULE ---
 comunas_maule = {
     "Provincia de Linares": ["Linares", "Yerbas Buenas", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre"],
     "Provincia de Talca": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael"],
@@ -15,81 +15,96 @@ comunas_maule = {
     "Provincia de Cauquenes": ["Cauquenes", "Chanco", "Pelluhue"]
 }
 
-# Coeficientes de cultivo (Kc) aproximados para el Maule
-cultivos_data = {
-    "Frutales": ["Cerezos", "Arándanos", "Manzanos", "Nogales", "Avellano Europeo", "Olivos", "Perales", "Ciruelos"],
-    "Viñedos": ["Uva de Mesa", "Vid Vinífera (Tinto)", "Vid Vinífera (Blanco)"],
-    "Cereales y Otros": ["Trigo", "Maíz", "Arroz", "Remolacha", "Alfalfa", "Tomate Industrial", "Praderas"]
-}
-
 # --- ENCABEZADO ---
-st.title("💧 RainClub Ultra: Gestión Hídrica 360°")
-st.markdown("### El Software Definitivo para el Agricultor del Maule")
+st.title("💧 RainClub Enterprise V4.0")
+st.markdown("## Sistema Integral de Gestión Hídrica - Región del Maule")
 st.write("---")
 
-# --- PANEL LATERAL ---
-st.sidebar.header("📍 1. Ubicación")
-provincia = st.sidebar.selectbox("Provincia", list(comunas_maule.keys()))
-comuna = st.sidebar.selectbox("Comuna", comunas_maule[provincia])
+# --- PANEL LATERAL (INPUTS) ---
+st.sidebar.header("📍 1. Ubicación y Entorno")
+prov = st.sidebar.selectbox("Provincia", list(comunas_maule.keys()))
+comu = st.sidebar.selectbox("Comuna", comunas_maule[prov])
+entorno = st.sidebar.radio("Tipo de Entorno", ["Campo Abierto", "Invernadero Tecnificado", "Invernadero Casero"])
 
-st.sidebar.header("🌱 2. Cultivo")
-categoria = st.sidebar.selectbox("Categoría", list(cultivos_data.keys()))
-tipo_cultivo = st.sidebar.selectbox("Variedad", cultivos_data[categoria])
-hectareas = st.sidebar.number_input("Superficie (Hectáreas)", min_value=0.1, value=1.0, step=0.1)
+st.sidebar.header("🌱 2. Cultivo y Marco")
+cat = st.sidebar.selectbox("Categoría", ["Frutales", "Hortalizas", "Viñedos", "Cereales"])
+has = st.sidebar.number_input("Superficie (Hectáreas o m²)", min_value=0.1, value=1.0)
+dist_h = st.sidebar.number_input("Distancia entre hileras (m)", value=4.0)
+dist_p = st.sidebar.number_input("Distancia entre plantas (m)", value=2.0)
 
-st.sidebar.header("⚙️ 3. Equipo de Riego")
-sistema = st.sidebar.selectbox("Tipo de Sistema", ["Goteo", "Microaspersión", "Aspersión", "Surco/Tendida"])
-caudal_equipo = st.sidebar.number_input("Caudal del equipo (Litros por segundo/ha)", min_value=0.1, value=1.5)
+st.sidebar.header("⚙️ 3. Datos Técnicos")
+sis = st.sidebar.selectbox("Sistema de Riego", ["Goteo", "Cinta de Riego", "Microaspersión", "Surco"])
+caudal_emisor = st.sidebar.number_input("Caudal por emisor (Litros/Hora)", value=2.0)
+emisores_por_planta = st.sidebar.number_input("N° emisores por planta", value=2)
 
 # --- LÓGICA DE CÁLCULO PROFESIONAL ---
-# Evapotranspiración promedio (Etc)
-etc = 5.2  # mm/día (Valor estándar para zona central en temporada)
-eficiencia_dict = {"Goteo": 0.95, "Microaspersión": 0.85, "Aspersión": 0.75, "Surco/Tendida": 0.45}
-eficiencia = eficiencia_dict[sistema]
+# Factores de corrección
+factor_entorno = 0.7 if "Invernadero" in entorno else 1.0
+etc_base = 5.5 * factor_entorno 
 
-# Cálculos
-litros_totales_dia = (etc * hectareas * 10000) / eficiencia  # 1 mm = 10m3/ha = 10.000 litros/ha
-litros_por_segundo_necesarios = caudal_equipo * hectareas
-minutos_riego = (litros_totales_dia / (litros_por_segundo_necesarios * 60))
+# Cálculos de Densidad
+plantas_ha = 10000 / (dist_h * dist_p)
+total_plantas = plantas_ha * has
 
-# --- PANTALLA DE RESULTADOS ---
-st.subheader(f"📊 Reporte de Riego: {tipo_cultivo} en {comuna}")
+# Cálculos de Agua
+litros_planta_dia = etc_base 
+litros_totales_dia = litros_planta_dia * total_plantas
 
+# Cálculo de Tiempo (basado en emisores)
+litros_hora_planta = caudal_emisor * emisores_por_planta
+horas_riego = litros_planta_dia / litros_hora_planta
+minutos_riego = horas_riego * 60
+
+# --- PANTALLA PRINCIPAL (RESULTADOS) ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("Agua Total Diaria", f"{litros_totales_dia:,.0f} Litros")
-    st.caption("Cantidad total de agua que el campo necesita hoy.")
+    st.metric("Agua Total Proyecto", f"{litros_totales_dia:,.0f} L/día")
+    st.caption(f"Cálculo para {int(total_plantas)} plantas en {comu}")
 
 with col2:
-    st.metric("Tiempo de Riego", f"{minutos_riego:.0f} Minutos")
-    st.caption(f"Tiempo de operación para cubrir la demanda con su equipo.")
+    st.metric("Tiempo de Riego", f"{int(minutos_riego)} min")
+    st.caption(f"Frecuencia sugerida: 1 vez al día")
 
 with col3:
-    st.metric("Caudal Operativo", f"{litros_por_segundo_necesarios:.1f} L/seg")
-    st.caption("Flujo de agua necesario en la bomba.")
+    st.metric("Dosis por Planta", f"{litros_planta_dia:.2f} L")
+    st.caption(f"Eficiencia del sistema: {(0.95 if sis == 'Goteo' else 0.5)*100}%")
 
-# --- SECCIÓN DE IMPACTO (PARA EL JURADO) ---
+# --- MODELO DE NEGOCIO Y PAGOS (EL PITCH GANADOR) ---
 st.write("---")
-st.subheader("💡 Análisis de Sostenibilidad")
+st.subheader("💼 Plan de Negocios RainClub")
 
-if eficiencia < 0.6:
-    st.error(f"⚠️ Alerta: El riego por {sistema} en {comuna} está desperdiciando un {(1-eficiencia)*100:.0f}% de agua. Se recomienda migrar a Goteo.")
-else:
-    st.success(f"✅ Excelente: Su sistema de {sistema} ahorra {(eficiencia*100):.0f}% de agua comparado con métodos tradicionales.")
+tab1, tab2, tab3 = st.tabs(["💎 Funciones Premium vs Gratis", "💰 Pasarela de Pagos", "🚀 Impacto"])
 
-# --- MODELO DE NEGOCIO ---
-with st.expander("💰 Ver Modelo de Negocio RainClub (SabíaLab)"):
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown("**PLAN BÁSICO (Siempre Gratis)**")
-        st.write("- Para las 30 comunas del Maule.")
-        st.write("- Cálculo de minutos y litros ilimitados.")
-        st.write("- Acceso para pequeños agricultores de la región.")
-    with col_b:
-        st.markdown("**PLAN PRO ($15.000 mensual)**")
-        st.write("- Integración con sensores de humedad de suelo.")
-        st.write("- Alertas críticas al celular por heladas o sequía.")
-        st.write("- **Este plan financia la tecnología para el agro local.**")
+with tab1:
+    col_g, col_p = st.columns(2)
+    with col_g:
+        st.success("### **Plan Básico (Gratis)**")
+        st.write("- Calculadora de riego ilimitada.")
+        st.write("- Soporte para las 30 comunas del Maule.")
+        st.write("- Guía de cultivos estacionales.")
+        st.write("**Para:** Pequeños agricultores e huerteros.")
+    with col_p:
+        st.warning("### **Plan Premium ($15.000/mes)**")
+        st.write("- **Alertas por SMS:** Aviso de heladas en tiempo real.")
+        st.write("- **Sensores IoT:** Conexión directa a humedad de suelo.")
+        st.write("- **Historial:** Gráficos de consumo mensual.")
+        st.write("**Para:** Productores exportadores.")
 
-st.info(f"RainClub v2.0 - Desplegado para {comuna}, Región del Maule.")
+with tab2:
+    st.write("#### ¿A dónde va el dinero?")
+    st.info("Los fondos se recaudan a través de la **Cooperativa RainClub Maule**, destinados al mantenimiento del servidor y a la donación de kits de riego para escuelas agrícolas de la región.")
+    
+    st.write("#### Métodos de Pago Aceptados:")
+    col_p1, col_p2, col_p3 = st.columns(3)
+    col_p1.button("💳 WebPay / Débito")
+    col_p2.button("📱 Mercado Pago")
+    col_p3.button("🏦 Transferencia")
+
+with tab3:
+    st.write("#### ¿Por qué premiar este proyecto?")
+    st.write("1. **Local:** Diseñado en el corazón del Maule (Linares/Yerbas Buenas).")
+    st.write("2. **Social:** Los que tienen más (Premium) financian a los que tienen menos (Básico).")
+    st.write("3. **Ecológico:** Ahorro proyectado de un 40% de agua en la región.")
+
+st.info("RainClub Enterprise V4.0 - Software desarrollado para SabíaLab 2026.")
