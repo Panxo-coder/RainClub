@@ -1,30 +1,47 @@
 import streamlit as st
 import time
 
-# Configuración Pro
-st.set_page_config(page_title="RainClub V18.0 - Greenhouse Edition", page_icon="🏠", layout="wide")
+# Configuración de Ingeniería Agrícola
+st.set_page_config(page_title="RainClub V19.0 - Master Irrigation", page_icon="💧", layout="wide")
+
+# --- BASE DE DATOS DE SISTEMAS DE RIEGO (Eficiencia Real) ---
+dict_riego = {
+    "-- Sistemas de Alta Eficiencia (Tecnificados) --": 0.95,
+    "Riego por Goteo (Estándar)": 0.95,
+    "Riego por Goteo Subsuperficial": 0.98,
+    "Microaspersión": 0.85,
+    "Microjets": 0.85,
+    "Nebulización (Invernaderos)": 0.90,
+    "-- Sistemas de Aspersión --": 0.80,
+    "Aspersión Fija": 0.75,
+    "Aspersión Móvil (Carros)": 0.70,
+    "Pivote Central": 0.85,
+    "Side Roll (Ala de riego)": 0.80,
+    "-- Sistemas de Superficie (Tradicionales) --": 0.50,
+    "Riego por Surcos (Bien nivelado)": 0.60,
+    "Riego por Surcos (Tradicional)": 0.45,
+    "Riego por Tendida (Inundación)": 0.35,
+    "Riego por Bordes / Tazas": 0.55,
+    "Riego por Califas": 0.50
+}
 
 # --- BASES DE DATOS DE CULTIVOS ---
 cultivos_aire_libre = {
-    "-- Frutales --": 1.0, "Cerezos": 1.1, "Nogales": 1.05, "Paltos": 0.85, "Manzanos": 1.0, "Vides": 0.85, "Arándanos": 0.9,
-    "-- Extensivos --": 1.0, "Maíz": 1.2, "Trigo": 1.0, "Papas": 1.1,
-    "-- Forrajes --": 1.0, "Pradera Natural": 0.9, "Alfalfa": 1.15
+    "Cerezos": 1.1, "Nogales": 1.05, "Paltos": 0.85, "Manzanos": 1.0, "Vides": 0.85, "Arándanos": 0.9,
+    "Maíz": 1.2, "Trigo": 1.0, "Papas": 1.1, "Pradera Natural": 0.9, "Alfalfa": 1.15, "Olivos": 0.7
 }
 
 cultivos_invernadero = {
-    "-- Hortalizas --": 1.0, "Tomate Invernadero": 1.15, "Pimiento / Morrón": 1.1, "Pepino": 1.1, "Melón": 1.0, "Sandía": 1.0,
-    "-- Flores --": 1.0, "Rosas": 0.9, "Claveles": 0.85, "Lilium": 0.9,
-    "-- Verdes --": 1.0, "Lechuga Hidropónica": 1.0, "Espinaca": 1.0, "Frutilla Invernadero": 0.95
+    "Tomate Invernadero": 1.15, "Pimiento / Morrón": 1.1, "Pepino": 1.1, "Rosas": 0.9, 
+    "Lechuga Hidropónica": 1.0, "Frutilla Invernadero": 0.95
 }
 
 # --- BASE DE DATOS REGIONAL ---
-chile_agro = {
-    "Región del Maule": {"ET": 5.2}, "Región Metropolitana": {"ET": 5.8}, "Región de O'Higgins": {"ET": 5.5}
-}
+chile_agro = {"Región del Maule": {"ET": 5.2}, "Región Metropolitana": {"ET": 5.8}, "Región de O'Higgins": {"ET": 5.5}}
 
 # --- ENCABEZADO ---
-st.title("💧 RainClub Chile V18.0")
-st.markdown("#### Gestión de Riego: Aire Libre e Invernaderos Tecnificados")
+st.title("💧 RainClub Chile V19.0")
+st.markdown("#### Plataforma Global de Gestión Hídrica y Eficiencia de Riego")
 st.write("---")
 
 # --- PANEL LATERAL ---
@@ -32,72 +49,53 @@ st.sidebar.header("📍 1. Ubicación")
 reg_sel = st.sidebar.selectbox("Región", list(chile_agro.keys()))
 
 st.sidebar.divider()
-st.sidebar.header("🏠 2. Tipo de Instalación")
-# BOTÓN CLAVE: Cambia toda la lógica de la App
+st.sidebar.header("🏠 2. Instalación")
 es_invernadero = st.sidebar.checkbox("¿Cultiva en Invernadero?")
 
 st.sidebar.divider()
 st.sidebar.header("🌱 3. Selección de Cultivo")
-
-if es_invernadero:
-    st.sidebar.warning("🛠️ Modo Invernadero Activo")
-    lista_actual = cultivos_invernadero
-else:
-    lista_actual = cultivos_aire_libre
-
-cultivo_usuario = st.sidebar.selectbox("¿Qué tiene plantado?", list(lista_actual.keys()))
+lista_actual = cultivos_invernadero if es_invernadero else cultivos_aire_libre
+cultivo_usuario = st.sidebar.selectbox("Cultivo", list(lista_actual.keys()))
 kc_actual = lista_actual[cultivo_usuario]
 
 st.sidebar.divider()
-st.sidebar.header("🚜 4. Parámetros")
+st.sidebar.header("💦 4. Sistema de Riego")
+# AQUÍ ESTÁ EL CATÁLOGO MAESTRO QUE PEDISTE
+sistema_sel = st.sidebar.selectbox("Tipo de Riego Utilizado", list(dict_riego.keys()))
+efi_sel = dict_riego[sistema_sel]
+
+st.sidebar.divider()
+st.sidebar.header("🚜 5. Parámetros")
 has = st.sidebar.number_input("Superficie (Hectáreas)", min_value=0.01, value=1.0, step=0.1)
 
-# Lógica de Marco de Plantación
+# Lógica de población
 es_cobertura_total = "Pradera" in cultivo_usuario or "Alfalfa" in cultivo_usuario or "Hidropónica" in cultivo_usuario
-
 if not es_cobertura_total:
-    dist_h = st.sidebar.number_input("Distancia Hileras (m)", value=3.0 if es_invernadero else 4.0)
-    dist_p = st.sidebar.number_input("Distancia Plantas (m)", value=0.5 if es_invernadero else 2.0)
+    dist_h = st.sidebar.number_input("Distancia Hileras (m)", value=4.0)
+    dist_p = st.sidebar.number_input("Distancia Plantas (m)", value=2.0)
     pl_total = (10000 / (dist_h * dist_p)) * has
 else:
     pl_total = 1
 
-sistema = st.sidebar.selectbox("Riego", ["Goteo", "Microaspersión", "Nebulización (Invernadero)"])
-
-# --- LÓGICA DE CÁLCULO ---
+# --- CÁLCULO DE INGENIERÍA ---
 et_base = chile_agro[reg_sel]["ET"]
-# En invernadero la ET es menor (un 70% de la exterior aprox) pero el Kc es mayor por la intensidad
 etc_final = (et_base * 0.7 * kc_actual) if es_invernadero else (et_base * kc_actual)
 
-efi = 0.95 if "Goteo" in sistema or "Nebulización" in sistema else 0.85
-vol_m3 = (etc_final / efi) * 10 * has
+# La eficiencia castiga o premia el volumen final
+# Un riego por tendida (35%) requiere casi 3 veces más agua que un goteo (95%)
+vol_m3 = (etc_final / efi_sel) * 10 * has
 l_dia = vol_m3 * 1000
-min_riego = (vol_m3 / (2.5 * has)) * 60 # Caudal más alto en invernaderos
+# Tiempo de riego referencial según el sistema
+caudal_ref = 2.0 if efi_sel > 0.8 else (5.0 if efi_sel > 0.6 else 15.0)
+min_riego = (vol_m3 / (caudal_ref * has)) * 60
 
 # --- RESULTADOS ---
-st.subheader(f"📊 Reporte: {cultivo_usuario} " + ("(Ambiente Controlado)" if es_invernadero else "(Aire Libre)"))
+st.subheader(f"📊 Análisis Técnico: {cultivo_usuario} vía {sistema_sel}")
 
-if "--" in cultivo_usuario:
-    st.error("Por favor, seleccione un cultivo específico.")
+if "--" in sistema_sel:
+    st.error("Seleccione un sistema de riego válido.")
 else:
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Agua Diaria", f"{l_dia:,.0f} L")
-    c2.metric("Tiempo Riego", f"{int(min_riego)} min")
-    c3.metric("Kc Ajustado", f"{kc_actual}")
-    c4.metric("Tipo", "Invernadero" if es_invernadero else "Cielo Abierto")
-
-# --- SECCIÓN PRO ---
-st.write("---")
-col_pro, col_pago = st.columns(2)
-with col_pro:
-    st.info("### 💎 Beneficios Pro")
-    if st.button("🔔 Simular Alerta de Humedad"):
-        st.toast("Verificando sensores del invernadero...")
-        time.sleep(1)
-        st.success(f"✅ Alerta: Nivel de humedad óptimo para su {cultivo_usuario}.")
-with col_pago:
-    st.warning("### 💳 Suscripción")
-    st.write("Costo: $15.000/mes. 40% de comisión para el desarrollador.")
-    st.button("Activar RainClub Pro")
-
-st.info("RainClub V18.0 - La App más versátil para el agro chileno.")
+    c1.metric("Agua Necesaria", f"{l_dia:,.0f} L/día")
+    c2.metric("Tiempo Estimado", f"{int(min_riego)} min")
+    c3.metric("Eficiencia", f"{int(efi_sel*100)}%", delta="Sistema" if efi_sel > 0.8 else "Baja", delta_color="normal")
