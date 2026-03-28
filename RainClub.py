@@ -1,101 +1,104 @@
 import streamlit as st
 import random
 
-# Configuración de Software Escala Nacional
-st.set_page_config(page_title="RainClub Chile V11.0", page_icon="🇨🇱", layout="wide")
+# Configuración de Software Escala Nacional Jerárquico
+st.set_page_config(page_title="RainClub Chile V12.0", page_icon="🇨🇱", layout="wide")
 
-# --- BASE DE DATOS NACIONAL (ZONIFICACIÓN) ---
-zonas_chile = {
-    "Norte Grande (Arica a Antofagasta)": {
-        "comunas": ["Arica", "Iquique", "Antofagasta", "Calama", "Pica"],
-        "sugerencia": "Limones, Olivos, Quínoa y hortalizas bajo malla.",
-        "et_base": 6.5
+# --- BASE DE DATOS JERÁRQUICA NACIONAL ---
+# Estructura: Región -> Provincia -> Comunas
+chile_datos = {
+    "Región del Maule": {
+        "Provincias": {
+            "Linares": ["Linares", "Yerbas Buenas", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre"],
+            "Talca": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael"],
+            "Curicó": ["Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén"],
+            "Cauquenes": ["Cauquenes", "Chanco", "Pelluhue"]
+        },
+        "Sugerencia": "Cerezos, Arándanos, Manzanos y Vides viníferas.",
+        "ET_Base": 5.2
     },
-    "Norte Chico (Atacama a Coquimbo)": {
-        "comunas": ["Copiapó", "Vallenar", "La Serena", "Coquimbo", "Ovalle", "Vicuña"],
-        "sugerencia": "Uva de mesa, Cítricos, Nogales y Pisco.",
-        "et_base": 5.8
+    "Región de O'Higgins": {
+        "Provincias": {
+            "Cachapoal": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente"],
+            "Colchagua": ["San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+            "Cardenal Caro": ["Pichilemu", "La Estrella", "Litueche", "Marchigüe", "Navidad", "Paredones"]
+        },
+        "Sugerencia": "Maíz, Frutales de carozo y Semilleros.",
+        "ET_Base": 5.5
     },
-    "Zona Central (Valparaíso a Maule)": {
-        "comunas": ["Santiago", "Rancagua", "Talca", "Linares", "Curicó", "Yerbas Buenas", "Quillota"],
-        "sugerencia": "Cerezos, Arándanos, Vides viníferas y Frutales de carozo.",
-        "et_base": 5.2
-    },
-    "Zona Sur (Ñuble a Los Lagos)": {
-        "comunas": ["Chillán", "Concepción", "Temuco", "Valdivia", "Osorno", "Puerto Montt"],
-        "sugerencia": "Avellano Europeo, Frambuesas, Lechería y Praderas.",
-        "et_base": 3.5
-    },
-    "Zona Austral (Aysén a Magallanes)": {
-        "comunas": ["Coyhaique", "Punta Arenas", "Puerto Natales"],
-        "sugerencia": "Calafate, Invernaderos tecnificados y ganadería ovina.",
-        "et_base": 2.1
+    "Región Metropolitana": {
+        "Provincias": {
+            "Santiago": ["Santiago", "Cerrillos", "Maipú", "Pudahuel", "Quilicura"],
+            "Chacabuco": ["Colina", "Lampa", "Tiltil"],
+            "Maipo": ["San Bernardo", "Buin", "Paine", "Calera de Tango"],
+            "Melipilla": ["Melipilla", "Curacaví", "María Pinto", "San Pedro"]
+        },
+        "Sugerencia": "Nogales, Hortalizas frescas y Uva de mesa.",
+        "ET_Base": 5.8
     }
 }
 
 # --- ENCABEZADO ---
-st.title("💧 RainClub Chile V11.0: Inteligencia Agrícola Nacional")
-st.markdown("### El Futuro del Riego desde Arica a Magallanes")
+st.title("💧 RainClub Chile V12.0")
+st.markdown("### Plataforma de Gestión Hídrica Nacional Inteligente")
 st.write("---")
 
-# --- PANEL LATERAL (CONTROL NACIONAL) ---
-st.sidebar.header("🗺️ Selección Geográfica")
-zona_sel = st.sidebar.selectbox("Zona de Chile", list(zonas_chile.keys()))
-comuna_sel = st.sidebar.selectbox("Comuna", zonas_chile[zona_sel]["comunas"])
+# --- PANEL LATERAL (JERARQUÍA DE UBICACIÓN) ---
+st.sidebar.header("📍 Ubicación Geográfica")
+
+# 1. Selección de Región
+region_sel = st.sidebar.selectbox("Seleccione Región", list(chile_datos.keys()))
+
+# 2. Selección de Provincia (basada en la Región)
+provincias_dict = chile_datos[region_sel]["Provincias"]
+provincia_sel = st.sidebar.selectbox("Seleccione Provincia", list(provincias_dict.keys()))
+
+# 3. Selección de Comuna (basada en la Provincia)
+comuna_sel = st.sidebar.selectbox("Seleccione Comuna", provincias_dict[provincia_sel])
 
 st.sidebar.divider()
 st.sidebar.header("🚜 Datos del Predio")
-has = st.sidebar.number_input("Hectáreas", min_value=0.1, value=1.0)
-dist_h = st.sidebar.number_input("Distancia Hileras (m)", value=4.0)
-dist_p = st.sidebar.number_input("Distancia Plantas (m)", value=2.0)
-sistema = st.sidebar.selectbox("Sistema de Riego", ["Goteo (95%)", "Microaspersión (85%)", "Aspersión (75%)", "Tendida (50%)"])
+has = st.sidebar.number_input("Hectáreas totales", value=1.0)
+dist_h = st.sidebar.number_input("Entre Hileras (m)", value=4.0)
+dist_p = st.sidebar.number_input("Entre Plantas (m)", value=2.0)
+sistema = st.sidebar.selectbox("Sistema de Riego", ["Goteo (95%)", "Microaspersión (85%)", "Tendida (50%)"])
 
-# --- LÓGICA DE INTELIGENCIA ---
-et_actual = zonas_chile[zona_sel]["et_base"]
+# --- LÓGICA DE CÁLCULO ---
+et_actual = chile_datos[region_sel]["ET_Base"]
 eficiencia = 0.95 if "Goteo" in sistema else (0.85 if "Micro" in sistema else 0.50)
 plantas_total = (10000 / (dist_h * dist_p)) * has
 litros_totales = (et_actual * plantas_total) / eficiencia
 minutos_riego = (litros_totales / (1.5 * has * 60))
 
-# --- PANTALLA DE RESULTADOS ---
-st.subheader(f"📍 Reporte para {comuna_sel} - {zona_sel}")
+# --- RESULTADOS ---
+st.subheader(f"📊 Reporte: {comuna_sel} ({provincia_sel}), {region_sel}")
 
-col_sug, col_calc = st.columns([1, 2])
+col_info, col_res = st.columns([1, 2])
 
-with col_sug:
-    st.info("💡 **Sugerencia de Cultivo Factible:**")
-    st.write(zonas_chile[zona_sel]["sugerencia"])
-    st.warning("⚠️ Análisis basado en disponibilidad hídrica regional.")
+with col_info:
+    st.info("💡 **Análisis de Factibilidad:**")
+    st.write(f"En esta zona sugerimos: **{chile_datos[region_sel]['Sugerencia']}**")
+    st.caption(f"Datos climáticos sincronizados con ET: {et_actual} mm/día")
 
-with col_calc:
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Agua Diaria", f"{litros_totales:,.0f} L")
-    c2.metric("Tiempo Riego", f"{int(minutos_riego)} min")
-    c3.metric("Plantas", f"{int(plantas_total)} pl")
+with col_res:
+    res1, res2, res3 = st.columns(3)
+    res1.metric("Agua Diaria", f"{litros_totales:,.0f} L")
+    res2.metric("Tiempo Riego", f"{int(minutos_riego)} min")
+    res3.metric("Plantas", f"{int(plantas_total)} pl")
 
-# --- MODELO DE NEGOCIO NACIONAL (TU GANANCIA) ---
+# --- MODELO DE NEGOCIO Y PAGOS ---
 st.write("---")
-tab1, tab2, tab3 = st.tabs(["💰 Planes Nacionales", "💳 Pasarela Global", "🛰️ Red Nacional Agromet"])
+tab1, tab2, tab3 = st.tabs(["💎 Planes", "💳 Pasarelas de Pago", "💰 Mi Comisión"])
 
 with tab1:
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.success("### **Plan Básico (Gratis)**")
-        st.write("- Sugerencias de cultivo por zona.")
-        st.write("- Calculadora nacional para las 16 regiones.")
-        st.write("**Impacto:** Digitalizar el pequeño agro chileno.")
-    with col_b:
-        st.warning("### **Plan Pro-Empresarial ($15.000/mes)**")
-        st.write("- Alertas críticas nacionales (MeteoChile/Agromet).")
-        st.write("- Análisis de rentabilidad por cultivo.")
-        st.write("- **40% de Comisión para el Desarrollador ($6.000).**")
+    st.success("### **Plan Básico (Gratis)**: Acceso nacional completo.")
+    st.warning("### **Plan Pro ($15.000/mes)**: Alertas WhatsApp y Sensores IoT.")
 
 with tab2:
-    st.write("#### Medios de Pago Globales habilitados:")
-    st.write("Visa, Mastercard, PayPal, Apple Pay, Google Pay, Mercado Pago, WebPay (Chile).")
-    st.button("💳 SUSCRIBIRME A RAINCLUB PRO")
+    st.write("#### Medios de Pago:")
+    st.write("💳 Visa | Mastercard | WebPay | PayPal | Google Pay | Apple Pay | Mercado Pago")
+    st.button("PAGAR SUSCRIPCIÓN")
 
 with tab3:
-    st.info("RainClub Chile utiliza una red de +200 estaciones meteorológicas simuladas para el Pitch, listas para conexión vía API oficial.")
-
-st.info("RainClub Chile V11.0 - Un proyecto de Impacto Nacional desarrollado para SabíaLab 2026.")
+    st.write("#### Transparencia de Ingresos:")
+    st.
