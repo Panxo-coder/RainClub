@@ -1,122 +1,117 @@
 import streamlit as st
 import time
 
-# Configuración de Ingeniería Agronómica Superior
-st.set_page_config(page_title="RainClub V26.0 - Master Agro", page_icon="🚜", layout="wide")
+# Configuración de Software Agronómico Profesional
+st.set_page_config(page_title="RainClub V28.0 - Full Master", page_icon="💧", layout="wide")
 
-# --- 1. BASES DE DATOS TÉCNICAS ---
-# Kc (Coeficiente de cultivo)
-dict_cultivos = {
-    "Cerezos": 1.1, "Nogales": 1.05, "Paltos": 0.85, "Manzanos": 1.0, "Vides": 0.85,
-    "Maíz": 1.2, "Alfalfa": 1.15, "Papas": 1.1, "Tomates": 1.15, "Praderas": 1.0
+# --- 1. BASE DE DATOS NACIONAL COMPLETA (PROTEGIDA) ---
+chile_full = {
+    "Arica y Parinacota": {"ET": 6.8, "Provincias": {"Arica": ["Arica", "Camarones"], "Parinacota": ["Putre", "General Lagos"]}},
+    "Tarapacá": {"ET": 6.5, "Provincias": {"Iquique": ["Iquique", "Alto Hospicio"], "Tamarugal": ["Pica", "Huara"]}},
+    "Antofagasta": {"ET": 6.2, "Provincias": {"Antofagasta": ["Taltal"], "El Loa": ["Calama", "San Pedro"]}},
+    "Atacama": {"ET": 6.0, "Provincias": {"Copiapó": ["Caldera"], "Huasco": ["Vallenar", "Huasco"]}},
+    "Coquimbo": {"ET": 5.8, "Provincias": {"Elqui": ["La Serena", "Vicuña"], "Limarí": ["Ovalle"], "Choapa": ["Illapel"]}},
+    "Valparaíso": {"ET": 5.4, "Provincias": {"Valparaíso": ["Casablanca"], "Quillota": ["Quillota"], "San Felipe": ["San Felipe"]}},
+    "Metropolitana": {"ET": 5.6, "Provincias": {"Santiago": ["Maipú", "Pudahuel"], "Maipo": ["Buin", "Paine"], "Chacabuco": ["Colina", "Lampa"]}},
+    "O'Higgins": {"ET": 5.4, "Provincias": {"Cachapoal": ["Rancagua", "Rengo"], "Colchagua": ["San Fernando", "Santa Cruz"], "Cardenal Caro": ["Pichilemu"]}},
+    "Maule": {"ET": 5.2, "Provincias": {"Linares": ["Linares", "Yerbas Buenas", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre"], "Talca": ["Talca", "Maule", "San Clemente"], "Curicó": ["Curicó", "Molina", "Teno"], "Cauquenes": ["Cauquenes", "Chanco"]}},
+    "Ñuble": {"ET": 4.8, "Provincias": {"Diguillín": ["Chillán", "Bulnes"], "Itata": ["Quirihue"], "Punilla": ["San Carlos"]}},
+    "Biobío": {"ET": 4.5, "Provincias": {"Concepción": ["Coronel"], "Biobío": ["Los Ángeles"], "Arauco": ["Cañete"]}},
+    "La Araucanía": {"ET": 4.0, "Provincias": {"Cautín": ["Temuco", "Villarrica"], "Malleco": ["Angol", "Victoria"]}},
+    "Los Ríos": {"ET": 3.5, "Provincias": {"Valdivia": ["Valdivia"], "Ranco": ["La Unión"]}},
+    "Los Lagos": {"ET": 3.2, "Provincias": {"Llanquihue": ["Puerto Varas"], "Osorno": ["Osorno"], "Chiloé": ["Castro"]}},
+    "Aysén": {"ET": 2.5, "Provincias": {"Coyhaique": ["Coyhaique"], "Aysén": ["Aysén"]}},
+    "Magallanes": {"ET": 2.0, "Provincias": {"Magallanes": ["Punta Arenas"], "Última Esperanza": ["Puerto Natales"]}}
 }
 
-# Tipos de Suelo (Capacidad de Retención de Humedad)
+# --- 2. DICCIONARIOS TÉCNICOS ---
+dict_riego = {"Goteo": 0.95, "Microaspersión": 0.85, "Aspersión": 0.75, "Surcos": 0.50}
+caudal_diseno = {"Goteo": 45000, "Microaspersión": 75000, "Aspersión": 120000, "Surcos": 180000}
+
+cultivos_aire = {"Cerezos": 1.1, "Nogales": 1.05, "Paltos": 0.85, "Vides": 0.85, "Maíz": 1.2, "Alfalfa": 1.15, "Papas": 1.1, "Pradera": 1.05}
+cultivos_inv = {"Tomate": 1.15, "Pimiento": 1.1, "Pepino": 1.1, "Rosas": 0.9, "Lechuga Hidropónica": 1.0}
+
 dict_suelos = {
-    "Suelo Arenoso (Ligero)": {"frecuencia": 1, "retencion": 0.7, "desc": "Baja retención. Requiere riegos cortos y frecuentes."},
-    "Suelo Franco (Ideal)": {"frecuencia": 3, "retencion": 1.0, "desc": "Equilibrio perfecto. Riegos cada 3 días aprox."},
-    "Suelo Arcilloso (Pesado)": {"frecuencia": 5, "retencion": 1.3, "desc": "Mucha retención. Riegos abundantes pero distanciados."}
+    "Suelo Arenoso": {"frecuencia": 1, "desc": "Baja retención. Riegos cortos cada 1 día."},
+    "Suelo Franco": {"frecuencia": 3, "desc": "Ideal. Riegos cada 3 días."},
+    "Suelo Arcilloso": {"frecuencia": 5, "desc": "Alta retención. Riegos cada 5 días."}
 }
 
-# Nutrición Base
-dict_nutricion = {
-    "Cerezos": "Fósforo al inicio, Potasio en maduración y Calcio para la firmeza.",
-    "Nogales": "Zinc y Nitrógeno para el llenado del fruto.",
-    "Alfalfa": "Fósforo y Potasio. El Nitrógeno es bajo (lo fija el cultivo).",
-    "Maíz": "Urea (Nitrógeno) en etapas V4 y V6."
-}
-
-# --- 2. INTERFAZ ---
-st.title("🚜 RainClub: Consultoría Técnica Integral")
-st.markdown("##### Del Maule para el mundo - Inteligencia Agronómica V26.0")
+# --- 3. INTERFAZ ---
+st.title("💧 RainClub Chile V28.0")
+st.markdown("### Sistema de Gestión Agronómica e Hídrica Integral")
 st.write("---")
 
 # --- PANEL LATERAL ---
 with st.sidebar:
-    st.header("📍 1. Localización y Suelo")
-    comuna = st.text_input("Comuna / Sector", "Linares")
-    tipo_suelo = st.selectbox("Seleccione su tipo de suelo", list(dict_suelos.keys()))
+    st.header("📍 1. Ubicación Geográfica")
+    reg_sel = st.selectbox("Región", list(chile_full.keys()))
+    prov_sel = st.selectbox("Provincia", list(chile_full[reg_sel]["Provincias"].keys()))
+    comu_sel = st.selectbox("Comuna", chile_full[reg_sel]["Provincias"][prov_sel])
     
     st.divider()
-    st.header("🌱 2. Información del Cultivo")
-    cultivo_sel = st.selectbox("Cultivo", list(dict_cultivos.keys()))
-    has = st.number_input("Superficie (Hectáreas)", min_value=0.1, value=1.0)
+    st.header("🧪 2. Tipo de Suelo")
+    suelo_sel = st.selectbox("Textura del Suelo", list(dict_suelos.keys()))
     
     st.divider()
-    st.header("💧 3. Sistema de Riego")
-    sistema = st.selectbox("Método de Riego", ["Goteo (95% Efic.)", "Microaspersión (85% Efic.)", "Aspersión (75% Efic.)", "Surcos (50% Efic.)"])
+    st.header("🏠 3. Entorno y Cultivo")
+    es_inv = st.checkbox("Cultivo en Invernadero")
+    lista_c = cultivos_inv if es_inv else cultivos_aire
+    cultivo_sel = st.selectbox("Cultivo", list(lista_c.keys()))
+    has = st.number_input("Hectáreas (ha)", min_value=0.1, value=1.0)
+    
+    st.divider()
+    st.header("💧 4. Sistema de Riego")
+    sistema_sel = st.selectbox("Método de Riego", list(dict_riego.keys()))
 
-# --- 3. LÓGICA DE INGENIERÍA DE RIEGO (CORREGIDA) ---
-et_base = 5.5 # ET0 promedio zona central en verano
-kc = dict_cultivos[cultivo_sel]
-suelo_info = dict_suelos[tipo_suelo]
+# --- 4. LÓGICA DE INGENIERÍA ---
+et_reg = chile_full[reg_sel]["ET"]
+kc = lista_c[cultivo_sel]
+frecuencia = dict_suelos[suelo_sel]["frecuencia"]
+efi = dict_riego[sistema_sel]
 
-# Cálculo de Necesidad Neta (mm/día)
-necesidad_mm_dia = et_base * kc
+# Cálculo de necesidad hídrica por turno (Ingeniería de Riego)
+# Ajuste invernadero (menos evaporación directa)
+etc = (et_reg * 0.75 * kc) if es_inv else (et_reg * kc)
+lamina_turno = (etc * frecuencia) / efi
+litros_turno = lamina_turno * 10 * has * 1000
+horas_riego = litros_turno / (caudal_diseno[sistema_sel] * has)
 
-# Frecuencia según suelo
-dias_frecuencia = suelo_info["frecuencia"]
+# --- 5. RESULTADOS ---
+st.subheader(f"📊 Reporte Técnico: {comu_sel}, {reg_sel}")
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Frecuencia", f"Cada {frecuencia} días")
+col2.metric("Litros por Turno", f"{litros_turno:,.0f} L")
+col3.metric("Tiempo de Riego", f"{int(horas_riego*60)} min" if horas_riego < 1 else f"{horas_riego:.1f} Horas")
+col4.metric("Consumo Kc", f"{kc}")
 
-# Agua total a reponer en el ciclo de riego (mm)
-lamina_a_reponer = necesidad_mm_dia * dias_frecuencia
+st.info(f"💡 **Recomendación del Técnico:** {dict_suelos[suelo_sel]['desc']}")
 
-# Eficiencia según sistema
-efi = 0.95 if "Goteo" in sistema else (0.85 if "Micro" in sistema else 0.50)
-
-# Volumen Total en Litros para la superficie
-litros_totales_ciclo = (lamina_a_reponer / efi) * 10 * has * 1000
-
-# CORRECCIÓN DE HORAS: Caudal promedio real por sistema (L/hora/ha)
-# Un sistema de goteo suele entregar entre 40,000 y 60,000 L/hora por hectárea
-caudal_hora_ha = 45000 if "Goteo" in sistema else (80000 if "Micro" in sistema else 150000)
-horas_riego_total = litros_totales_ciclo / (caudal_hora_ha * has)
-
-# --- 4. VISUALIZACIÓN DE RESULTADOS ---
-st.subheader(f"📋 Diagnóstico Técnico para {cultivo_sel} en {comuna}")
-
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.metric("Frecuencia de Riego", f"Cada {dias_frecuencia} días")
-    st.write(f"**Nota Suelo:** {suelo_info['desc']}")
-with c2:
-    st.metric("Litros por Turno", f"{litros_totales_ciclo:,.0f} L")
-    st.write(f"**Superficie:** {has} Hectáreas")
-with c3:
-    # Mostramos minutos si es menos de una hora, o horas si es más
-    if horas_riego_total < 1:
-        st.metric("Tiempo de Riego", f"{int(horas_riego_total * 60)} min")
-    else:
-        st.metric("Tiempo de Riego", f"{horas_riego_total:.1f} Horas")
-    st.write(f"**Eficiencia:** {int(efi*100)}% ({sistema})")
-
-# --- 5. CALENDARIO Y RECOMENDACIONES ---
+# --- 6. CALENDARIO Y NUTRICIÓN ---
 st.write("---")
-col_info, col_cal = st.columns([1, 2])
+c_izq, c_der = st.columns([2, 1])
 
-with col_info:
-    st.info("### 💊 Plan de Nutrición")
-    st.write(dict_nutricion.get(cultivo_sel, "Aplicar fertilización base N-P-K según análisis de suelo."))
-    
-    st.warning("### 🛡️ Sanidad Vegetal")
-    st.write("- Revisar envés de las hojas por posibles ácaros.")
-    st.write("- Aplicar fungicida preventivo si la humedad relativa sube del 70%.")
-
-with col_cal:
-    st.success("### 📅 Calendario Próximos 7 Días")
+with c_izq:
+    st.success("📅 Calendario Semanal de Riego")
     dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-    for d in dias:
-        # Lógica simple: si el día es múltiplo de la frecuencia, se riega
-        indice = dias.index(d)
-        if indice % dias_frecuencia == 0:
-            st.write(f"✅ **{d}:** Toca Riego ({int(horas_riego_total*60)} min)")
+    for i, d in enumerate(dias):
+        if i % frecuencia == 0:
+            st.write(f"✅ **{d}:** Toca Riego - Operar por **{int(horas_riego*60)} min**.")
         else:
-            st.write(f"⚪ **{d}:** Descanso (Suelo con humedad)")
+            st.write(f"⚪ **{d}:** Descanso - Suelo con reserva.")
 
-# --- MODO PREMIUM ---
-st.write("---")
-if st.button("💎 Activar RainClub PRO (Gestión 360°)"):
+with c_der:
+    st.warning("💊 Plan de Fertirriego")
+    st.write(f"- **Cultivo:** {cultivo_sel}")
+    if not es_inv:
+        st.write("- **Marco sugerido:** Revisar densidad por hectárea.")
+    st.write("- **Nota:** Aplicar Nitrógeno y Potasio según etapa de crecimiento.")
+
+# --- MODO PRO ---
+st.divider()
+if st.button("💎 Activar Plan Pro Empresarial"):
     st.balloons()
-    st.write("### 🎁 Beneficios Pro Activados (Simulación):")
-    st.write("- Conexión directa a Estaciones Meteorológicas AGROMET.")
-    st.write("- Registro de aplicaciones de agroquímicos (SAG).")
-    st.write("- Predicción de cosecha y rentabilidad.")
+    st.write("### Beneficios RainClub Pro ($15.000/mes)")
+    st.write("- Alertas de Helada vía WhatsApp.")
+    st.write("- Integración con sensores de humedad de suelo.")
+    st.write("- Informe PDF para certificación Global GAP.")
