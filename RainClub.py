@@ -25,7 +25,6 @@ chile_full = {
 }
 
 # --- 2. DICCIONARIOS TÉCNICOS ---
-# Clasificación de Suelos (Frecuencia de riego ajustada por textura)
 dict_suelos = {
     "Arenoso": {"frec": 1, "desc": "Textura gruesa, drenaje excesivo. Riegos diarios cortos."},
     "Arenoso Franco": {"frec": 1, "desc": "Predomina arena, muy baja retención."},
@@ -38,7 +37,7 @@ dict_suelos = {
     "Franco Arcilloso": {"frec": 4, "desc": "Buena capacidad de campo, riego distanciado."},
     "Arcillo Arenoso": {"frec": 5, "desc": "Mucha arcilla, drenaje lento."},
     "Arcillo Limoso": {"frec": 5, "desc": "Muy pesado, riesgo de encharcamiento."},
-    "Arcilloso": {"frec": 5, "desc": "Textura muy fina, alta retención. Riegos muy espaciados."}
+    "Arcilloso": {"frec": 5, "desc": "Textura muy fina, alta retención. Riegos espaciados."}
 }
 
 cultivos_aire = {
@@ -72,9 +71,6 @@ with st.sidebar:
     reg_sel = st.selectbox("Región", list(chile_full.keys()), index=8)
     prov_sel = st.selectbox("Provincia", list(chile_full[reg_sel]["Provincias"].keys()))
     comu_sel = st.selectbox("Comuna", chile_full[reg_sel]["Provincias"][prov_sel])
-    
-    st.divider()
-    # NUEVO: Subtipos de Suelo
     suelo_sel = st.selectbox("Subtipo de Suelo (Textura)", list(dict_suelos.keys()), index=3)
     
     st.divider()
@@ -93,11 +89,9 @@ with st.sidebar:
     sistema_sel = st.selectbox("Sistema", list(dict_riego.keys()))
 
 # --- 4. LÓGICA DE INGENIERÍA ---
-# Cálculos de Densidad
 densidad_ha = 10000 / (dist_h * dist_p)
 total_plantas = densidad_ha * has
 
-# Lógica de Riego
 et_base = chile_full[reg_sel]["ET"]
 kc = lista_actual[cultivo_sel]["kc"]
 frecuencia = dict_suelos[suelo_sel]["frec"]
@@ -110,10 +104,6 @@ horas_riego = litros_turno / (caudal_diseno[sistema_sel] * has)
 
 # --- 5. RESULTADOS ---
 st.subheader(f"📊 Reporte de Ingeniería AgroMind: {comu_sel}")
-
-
-[Image of soil texture triangle]
-
 c1, c2, c3, c4 = st.columns(4)
 
 c1.metric("Población Total", f"{int(total_plantas):,} pl.")
@@ -133,7 +123,7 @@ with col_cal:
             t_str = f"{int(horas_riego*60)} min" if horas_riego < 1 else f"{horas_riego:.1f} h"
             st.write(f"💧 **{d}:** Toca Riego - Operar sistema por **{t_str}**.")
         else:
-            st.write(f"⚪ **{d}:** Descanso - Reserva de humedad en suelo {suelo_sel}.")
+            st.write(f"⚪ **{d}:** Descanso - Suelo con reserva.")
 
 with col_nut:
     st.warning("💊 Nutrición y Sanidad")
@@ -143,6 +133,6 @@ with col_nut:
     st.info(f"📍 **Textura:** {dict_suelos[suelo_sel]['desc']}")
 
 st.divider()
-if st.button("💎 Generar Certificado AgroMind PRO"):
+if st.button("💎 Generar Ficha AgroMind PRO"):
     st.balloons()
     st.write("Generando informe... Disponible en versión Pro.")
