@@ -1,118 +1,117 @@
 import streamlit as st
 import time
 
-# Configuración de Software de Nivel Profesional
-st.set_page_config(page_title="RainClub Chile V22.0", page_icon="💧", layout="wide")
+# Configuración de nivel Consultoría Agronómica
+st.set_page_config(page_title="RainClub V25.0 - Agronomy Suite", page_icon="🚜", layout="wide")
 
-# --- 1. BASE DE DATOS NACIONAL COMPLETA (16 REGIONES) ---
-chile_full = {
-    "Arica y Parinacota": {"ET": 6.8, "Provincias": {"Arica": ["Arica", "Camarones"], "Parinacota": ["Putre", "General Lagos"]}},
-    "Tarapacá": {"ET": 6.5, "Provincias": {"Iquique": ["Iquique", "Alto Hospicio"], "Tamarugal": ["Pozo Almonte", "Pica", "Huara"]}},
-    "Antofagasta": {"ET": 6.2, "Provincias": {"Antofagasta": ["Antofagasta", "Taltal"], "El Loa": ["Calama", "San Pedro de Atacama"], "Tocopilla": ["Tocopilla", "María Elena"]}},
-    "Atacama": {"ET": 6.0, "Provincias": {"Copiapó": ["Copiapó", "Caldera", "Tierra Amarilla"], "Huasco": ["Vallenar", "Freirina", "Huasco", "Alto del Carmen"], "Chañaral": ["Chañaral", "Diego de Almagro"]}},
-    "Coquimbo": {"ET": 5.8, "Provincias": {"Elqui": ["La Serena", "Coquimbo", "Andacollo", "Vicuña"], "Limarí": ["Ovalle", "Combarbalá", "Monte Patria", "Punitaqui"], "Choapa": ["Illapel", "Canela", "Los Vilos", "Salamanca"]}},
-    "Valparaíso": {"ET": 5.5, "Provincias": {"Valparaíso": ["Valparaíso", "Viña del Mar", "Casablanca"], "Quillota": ["Quillota", "La Cruz", "Nogales"], "San Felipe": ["San Felipe", "Llay-Llay", "Putaendo"], "Los Andes": ["Los Andes", "Calle Larga", "San Esteban"], "Petorca": ["La Ligua", "Cabildo", "Zapallar"], "San Antonio": ["San Antonio", "Algarrobo", "Cartagena"], "Marga Marga": ["Quilpué", "Villa Alemana", "Limache"]}},
-    "Metropolitana": {"ET": 5.6, "Provincias": {"Santiago": ["Santiago", "Maipú", "Pudahuel", "Quilicura"], "Maipo": ["San Bernardo", "Buin", "Paine", "Calera de Tango"], "Melipilla": ["Melipilla", "Curacaví", "María Pinto", "Alhué"], "Chacabuco": ["Colina", "Lampa", "Tiltil"], "Cordillera": ["Puente Alto", "Pirque", "San José de Maipo"], "Talagante": ["Talagante", "Isla de Maipo", "El Monte", "Peñaflor"]}},
-    "O'Higgins": {"ET": 5.4, "Provincias": {"Cachapoal": ["Rancagua", "Machalí", "Rengo", "Requínoa", "Doñihue", "Coinco", "Coltauco", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "San Vicente"], "Colchagua": ["San Fernando", "Chimbarongo", "Santa Cruz", "Chépica", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque"], "Cardenal Caro": ["Pichilemu", "La Estrella", "Litueche", "Marchigüe", "Navidad", "Paredones"]}},
-    "Maule": {"ET": 5.2, "Provincias": {"Linares": ["Linares", "Yerbas Buenas", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre"], "Talca": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael"], "Curicó": ["Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén"], "Cauquenes": ["Cauquenes", "Chanco", "Pelluhue"]}},
-    "Ñuble": {"ET": 4.8, "Provincias": {"Diguillín": ["Chillán", "Bulnes", "Chillán Viejo", "El Carmen", "Pemuco", "Pinto", "Quillón", "San Ignacio", "Yungay"], "Itata": ["Quirihue", "Cobquecura", "Coelemu", "Ninhue", "Portezuelo", "Ránquil", "Treguaco"], "Punilla": ["San Carlos", "Coihueco", "Ñiquén", "San Fabián", "San Nicolás"]}},
-    "Biobío": {"ET": 4.5, "Provincias": {"Concepción": ["Concepción", "Talcahuano", "Coronel", "Chiguayante", "Florida", "Hualpén", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Tomé"], "Biobío": ["Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"], "Arauco": ["Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa"]}},
-    "La Araucanía": {"ET": 4.0, "Provincias": {"Cautín": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol"], "Malleco": ["Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"]}},
-    "Los Ríos": {"ET": 3.5, "Provincias": {"Valdivia": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli"], "Ranco": ["La Unión", "Futrono", "Lago Ranco", "Río Bueno"]}},
-    "Los Lagos": {"ET": 3.2, "Provincias": {"Llanquihue": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas"], "Osorno": ["Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo"], "Chiloé": ["Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao"], "Palena": ["Chaitén", "Futaleufú", "Hualaihué", "Palena"]}},
-    "Aysén": {"ET": 2.5, "Provincias": {"Coyhaique": ["Coyhaique", "Lago Verde"], "Aysén": ["Aysén", "Cisnes", "Guaitecas"], "General Carrera": ["Chile Chico", "Río Ibáñez"], "Capitán Prat": ["Cochrane", "O'Higgins", "Tortel"]}},
-    "Magallanes": {"ET": 2.0, "Provincias": {"Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio"], "Última Esperanza": ["Puerto Natales", "Torres del Paine"], "Tierra del Fuego": ["Porvenir", "Primavera", "Timaukel"], "Antártica Chilena": ["Cabo de Hornos", "Antártica"]}}
+# --- 1. INTELIGENCIA AGRONÓMICA (BASES DE DATOS) ---
+
+# Fertilización recomendada por cultivo (N-P-K y Microelementos)
+dict_nutricion = {
+    "Cerezos": "Nitrógeno para crecimiento, Potasio en pinta. Calcio para evitar partiduras.",
+    "Nogales": "Nitrógeno en primavera. Zinc y Boro para mejorar el llenado de la nuez.",
+    "Paltos": "Nitrógeno moderado. Hierro y Magnesio para evitar clorosis en hojas.",
+    "Maíz": "Urea (Nitrógeno) en V4-V6. Fósforo a la siembra para raíz fuerte.",
+    "Papas": "Alto Potasio para calibre de tubérculo. Fósforo para inicio de estolones.",
+    "Alfalfa": "Principalmente Fósforo y Azufre. No requiere mucho Nitrógeno (lo fija sola).",
+    "Tomate": "Potasio para sabor y color. Calcio vital para evitar 'pudrición apical'.",
+    "Pradera": "Nitrógeno tras cada pastoreo para rebrote rápido. Azufre para calidad de proteína."
 }
 
-# --- 2. CATÁLOGOS TÉCNICOS ---
-dict_riego = {
-    "-- Tecnificado --": 0.95, "Goteo": 0.95, "Goteo Subsuperficial": 0.98, "Microaspersión": 0.85, "Microjets": 0.85, "Nebulización": 0.90, "Hidroponía": 0.98,
-    "-- Aspersión --": 0.80, "Pivote Central": 0.85, "Aspersión Fija": 0.75, "Aspersión Móvil": 0.70, "Cañón": 0.65,
-    "-- Superficie --": 0.50, "Surcos c/ Mangas": 0.65, "Surcos Tradicional": 0.45, "Inundación Controlada": 0.50, "Tendida": 0.35
+# Tipos de Suelo y su capacidad de retención
+dict_suelos = {
+    "Arcilloso (Pesado)": {"retencion": "Alta", "drenaje": "Lento", "ajuste_riego": 0.8},
+    "Franco (Ideal)": {"retencion": "Media-Alta", "drenaje": "Bueno", "ajuste_riego": 1.0},
+    "Arenoso (Ligero)": {"retencion": "Baja", "drenaje": "Muy rápido", "ajuste_riego": 1.3},
+    "Franco-Arcilloso": {"retencion": "Alta", "drenaje": "Moderado", "ajuste_riego": 0.9}
 }
 
-cultivos_aire = {
-    "-- Frutales --": 1.0, "Cerezos": 1.1, "Nogales": 1.05, "Paltos": 0.85, "Manzanos": 1.0, "Vides": 0.85, "Olivos": 0.7, "Arándanos": 0.9,
-    "-- Anuales --": 1.0, "Maíz": 1.2, "Trigo": 1.0, "Papas": 1.1, "Remolacha": 1.15,
-    "-- Praderas --": 1.0, "Pradera Mixta": 1.05, "Alfalfa": 1.15, "Trebol": 1.0
-}
-
-cultivos_inv = {
-    "-- Hortalizas --": 1.0, "Tomate": 1.15, "Pimiento": 1.1, "Pepino": 1.1, "Melón": 1.0,
-    "-- Flores --": 1.0, "Rosas": 0.9, "Claveles": 0.85, "Lilium": 0.9,
-    "-- Berries --": 1.0, "Frutilla Invernadero": 0.95, "Arándano en Maceta": 0.85
-}
-
-# --- 3. INTERFAZ ---
-st.title("💧 RainClub Chile V22.0")
-st.markdown("#### Gestión Nacional: Aire Libre, Invernaderos y Sistemas Globales")
+# --- 2. INTERFAZ Y NAVEGACIÓN ---
+st.title("🚜 RainClub: Gestión Agronómica Integral")
+st.markdown("##### Asesoría Técnica Automatizada para el Agricultor Chileno")
 st.write("---")
 
 # --- PANEL LATERAL ---
-st.sidebar.header("📍 1. Localización")
-reg_sel = st.sidebar.selectbox("Región", list(chile_full.keys()))
-prov_sel = st.sidebar.selectbox("Provincia", list(chile_full[reg_sel]["Provincias"].keys()))
-comu_sel = st.sidebar.selectbox("Comuna", chile_full[reg_sel]["Provincias"][prov_sel])
+with st.sidebar:
+    st.header("📍 Configuración del Predio")
+    reg = st.selectbox("Región", ["Maule", "Metropolitana", "O'Higgins", "Araucanía", "Coquimbo"])
+    has = st.number_input("Hectáreas totales", min_value=0.1, value=1.0)
+    
+    st.divider()
+    st.header("🌱 Información del Cultivo")
+    es_inv = st.checkbox("Cultivo en Invernadero")
+    tipo_cultivo = st.selectbox("Cultivo", list(dict_nutricion.keys()))
+    
+    st.divider()
+    st.header("🧪 Edafología (Suelo)")
+    suelo_sel = st.selectbox("Tipo de Suelo", list(dict_suelos.keys()))
+    
+    st.divider()
+    st.header("💧 Sistema de Riego")
+    sistema = st.selectbox("Método", ["Goteo", "Microaspersión", "Surcos", "Aspersión"])
 
-st.sidebar.divider()
-st.sidebar.header("🏠 2. Entorno")
-es_inv = st.sidebar.checkbox("¿Es Cultivo en Invernadero?")
+# --- 3. LÓGICA DE MARCO DE PLANTACIÓN ---
+# Si no es pradera, calculamos densidades
+es_pradera = "Pradera" in tipo_cultivo or "Alfalfa" in tipo_cultivo
 
-st.sidebar.divider()
-st.sidebar.header("🌱 3. Cultivo y Riego")
-lista_c = cultivos_inv if es_inv else cultivos_aire
-cultivo_sel = st.sidebar.selectbox("¿Qué tiene plantado?", list(lista_c.keys()))
-sistema_sel = st.sidebar.selectbox("Sistema de Riego", list(dict_riego.keys()))
+st.subheader(f"📋 Ficha Técnica: {tipo_cultivo}")
 
-st.sidebar.divider()
-st.sidebar.header("🚜 4. Parámetros")
-has = st.sidebar.number_input("Hectáreas (ha)", min_value=0.01, value=1.0)
-es_cobertura = any(x in cultivo_sel for x in ["Pradera", "Alfalfa", "Hidropónica", "Trebol"])
+col_m1, col_m2, col_m3 = st.columns(3)
 
-if not es_cobertura and not "--" in cultivo_sel:
-    dist_h = st.sidebar.number_input("Distancia Hileras (m)", value=4.0 if not es_inv else 1.0)
-    dist_p = st.sidebar.number_input("Distancia Plantas (m)", value=2.0 if not es_inv else 0.5)
-    pl_total = (10000 / (dist_h * dist_p)) * has
-else:
-    pl_total = 1
+with col_m1:
+    st.info("### 📐 Marco de Plantación")
+    if not es_pradera:
+        d_h = st.number_input("Distancia Hileras (m)", value=4.0, step=0.5)
+        d_p = st.number_input("Distancia Plantas (m)", value=2.0, step=0.5)
+        densidad = (10000 / (d_h * d_p)) * has
+        st.write(f"**Densidad:** {int(densidad)} plantas totales.")
+    else:
+        st.write("**Siembra:** Cobertura Total (Voleo/Líneas juntas).")
+        st.write("**Dosis semilla:** 25-35 kg/ha aprox.")
 
-# --- CÁLCULOS ---
-et_base = chile_full[reg_sel]["ET"]
-kc = lista_c[cultivo_sel]
-efi = dict_riego[sistema_sel]
-# Ajuste Invernadero: Menor ET pero Kc intensivo
-etc = (et_base * 0.75 * kc) if es_inv else (et_base * kc)
-vol_m3 = (etc / efi) * 10 * has
-litros = vol_m3 * 1000
-minutos = (vol_m3 / (3.0 * has)) * 60 # Caudal referencial
+with col_m2:
+    st.info("### 🧪 Suelo y Nutrición")
+    info_s = dict_suelos[suelo_sel]
+    st.write(f"**Suelo:** {suelo_sel}")
+    st.write(f"**Drenaje:** {info_s['drenaje']}")
+    st.write(f"**Recomendación:** {dict_nutricion[tipo_cultivo]}")
 
-# --- RESULTADOS (MODO GRATIS) ---
-st.subheader(f"📊 Reporte Operativo: {comu_sel}")
-if "--" in cultivo_sel or "--" in sistema_sel:
-    st.info("Seleccione cultivo y riego para ver resultados.")
-else:
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Agua Diaria", f"{litros:,.0f} L")
-    c2.metric("Tiempo Riego", f"{int(minutos)} min")
-    c3.metric("Eficiencia", f"{int(efi*100)}%")
-    c4.metric("Consumo Kc", f"{kc}")
+with col_m3:
+    st.info("### ⛅ Clima y Riego")
+    et_base = 5.2 # Valor base Maule
+    ajuste_suelo = info_s['ajuste_riego']
+    etc = et_base * 1.1 * ajuste_suelo # Simplificado
+    st.write(f"**Evapotranspiración:** {etc:.2f} mm/día")
+    st.write(f"**Estado Tiempo:** Despejado / 24°C")
 
-# --- SECCIÓN PRO (NEGOCIO) ---
+# --- 4. PLAN DE ACCIÓN DEL TÉCNICO (EL "QUE HACER") ---
 st.write("---")
-t_pro, t_pago = st.tabs(["💎 Funciones Pro", "💳 Suscripción"])
+st.subheader("📅 Calendario de Actividades Mensual")
 
-with t_pro:
-    st.write("### Beneficios Premium ($15.000/mes)")
-    st.markdown("- **Alertas WhatsApp:** 'Hola, es hora de regar tu " + cultivo_sel + "'.")
-    st.markdown("- **Sensores IoT:** Humedad de suelo en tiempo real.")
-    if st.button("🔔 Probar Simulación de Alerta"):
-        st.toast("Verificando clima en " + comu_sel)
-        time.sleep(1)
-        st.success("✅ Alerta enviada: 'RainClub: Riesgo de helada en su sector'.")
+t1, t2, t3 = st.tabs(["💧 Riego y Agua", "💊 Fertilización", "🛡️ Sanidad y Poda"])
 
-with t_pago:
-    st.write("#### Activar RainClub Pro")
-    st.button("💳 Ir a Pago Seguro")
-    st.info("Modelo: 40% de comisión para el creador ($6.000 por usuario).")
+with t1:
+    vol_dia = (etc / 0.9) * 10 * has
+    st.metric("Volumen diario sugerido", f"{vol_dia:,.0f} Litros")
+    st.write(f"**Frecuencia:** En suelo {suelo_sel}, se recomienda regar cada " + ("1 día" if "Arenoso" in suelo_sel else "3 días") + ".")
 
-st.info("RainClub V22.0 - Tecnología del Maule. SabíaLab 2026.")
+with t2:
+    st.write(f"### Plan de Abonado para {tipo_cultivo}")
+    st.success(f"**Fertilizantes sugeridos:** {dict_nutricion[tipo_cultivo]}")
+    st.write("- **Fondo:** Aplicar Fósforo y Potasio antes de la brotación.")
+    st.write("- **Mantención:** Nitrógeno fraccionado vía fertirriego.")
+
+with t3:
+    st.write("### Monitoreo Técnico")
+    st.warning("⚠️ **Alerta:** Revisar presencia de Arañita Roja y Pulgones esta semana por altas temperaturas.")
+    st.write("- Realizar poda de formación en ramas bajas.")
+    st.write("- Revisar sellado de cortes con pasta podadora.")
+
+# --- SECCIÓN PRO ---
+st.write("---")
+if st.button("💎 Generar Informe PDF Profesional (Versión Pro)"):
+    st.toast("Generando reporte agronómico...")
+    time.sleep(1)
+    st.success("Informe generado con éxito. Suscríbete para descargar.")
+
+st.caption("RainClub V25.0 - La Suite Agronómica más potente del Maule.")
