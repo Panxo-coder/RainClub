@@ -2,9 +2,9 @@ import streamlit as st
 import time
 
 # --- CONFIGURACIÓN DE NIVEL PROFESIONAL ---
-st.set_page_config(page_title="AgroMind 360 - Gestión Integral", page_icon="🚜", layout="wide")
+st.set_page_config(page_title="AgroMind 360 - Full Precision", page_icon="🚜", layout="wide")
 
-# --- 1. BASE DE DATOS GEOGRÁFICA COMPLETA (TODAS LAS REGIONES) ---
+# --- 1. BASE DE DATOS GEOGRÁFICA COMPLETA ---
 chile_full = {
     "Arica y Parinacota": {"ET": 6.8, "Provincias": {"Arica": ["Arica", "Camarones"], "Parinacota": ["Putre", "General Lagos"]}},
     "Tarapacá": {"ET": 6.5, "Provincias": {"Iquique": ["Iquique", "Alto Hospicio"], "Tamarugal": ["Pica", "Huara"]}},
@@ -24,8 +24,23 @@ chile_full = {
     "Magallanes": {"ET": 2.0, "Provincias": {"Magallanes": ["Punta Arenas"], "Última Esperanza": ["Puerto Natales"]}}
 }
 
-# --- 2. DICCIONARIOS TÉCNICOS DE CULTIVOS (MARCOS Y NUTRICIÓN) ---
-# Aquí están integrados los datos que antes ocupaban muchas líneas separadas
+# --- 2. DICCIONARIOS TÉCNICOS ---
+# Clasificación de Suelos (Frecuencia de riego ajustada por textura)
+dict_suelos = {
+    "Arenoso": {"frec": 1, "desc": "Textura gruesa, drenaje excesivo. Riegos diarios cortos."},
+    "Arenoso Franco": {"frec": 1, "desc": "Predomina arena, muy baja retención."},
+    "Franco Arenoso": {"frec": 2, "desc": "Drenaje rápido, requiere riegos frecuentes."},
+    "Franco": {"frec": 3, "desc": "Textura equilibrada, retención óptima. Ideal."},
+    "Franco Limoso": {"frec": 3, "desc": "Buena retención, cuidado con la compactación."},
+    "Limoso": {"frec": 4, "desc": "Retención alta, riesgo de costra superficial."},
+    "Franco Arcillo Arenoso": {"frec": 4, "desc": "Retención moderada-alta."},
+    "Franco Arcillo Limoso": {"frec": 4, "desc": "Retención alta, drenaje algo lento."},
+    "Franco Arcilloso": {"frec": 4, "desc": "Buena capacidad de campo, riego distanciado."},
+    "Arcillo Arenoso": {"frec": 5, "desc": "Mucha arcilla, drenaje lento."},
+    "Arcillo Limoso": {"frec": 5, "desc": "Muy pesado, riesgo de encharcamiento."},
+    "Arcilloso": {"frec": 5, "desc": "Textura muy fina, alta retención. Riegos muy espaciados."}
+}
+
 cultivos_aire = {
     "Cerezos": {"kc": 1.1, "dist_h": 4.5, "dist_p": 2.5, "nut": "Calcio para firmeza y Potasio en pinta."},
     "Nogales": {"kc": 1.05, "dist_h": 7.0, "dist_p": 5.0, "nut": "Zinc y Nitrógeno para llenado de nuez."},
@@ -40,37 +55,34 @@ cultivos_aire = {
 cultivos_inv = {
     "Tomate": {"kc": 1.15, "dist_h": 1.0, "dist_p": 0.4, "nut": "Calcio para evitar pudrición apical."},
     "Pimiento": {"kc": 1.1, "dist_h": 0.8, "dist_p": 0.3, "nut": "Potasio para grosor de pared."},
-    "Pepino": {"kc": 1.1, "dist_h": 1.2, "dist_p": 0.5, "nut": "Nitrógeno constante y mucha agua."},
-    "Lechuga Hidropónica": {"kc": 1.0, "dist_h": 0.25, "dist_p": 0.25, "nut": "Solución nutritiva balanceada."}
-}
-
-dict_suelos = {
-    "Suelo Arenoso": {"frecuencia": 1, "desc": "Poca retención. Riegos diarios cortos para evitar lavado de nutrientes."},
-    "Suelo Franco": {"frecuencia": 3, "desc": "Textura ideal. Retención equilibrada. Riego cada 3 días."},
-    "Suelo Arcilloso": {"frecuencia": 5, "desc": "Alta retención. Riegos distanciados para evitar asfixia radicular."}
+    "Pepino": {"kc": 1.1, "dist_h": 1.2, "dist_p": 0.5, "nut": "Nitrógeno constante."},
+    "Lechuga": {"kc": 1.0, "dist_h": 0.25, "dist_p": 0.25, "nut": "Nutrición balanceada."}
 }
 
 dict_riego = {"Goteo": 0.95, "Microaspersión": 0.85, "Aspersión": 0.75, "Surcos": 0.50}
 caudal_diseno = {"Goteo": 45000, "Microaspersión": 75000, "Aspersión": 120000, "Surcos": 180000}
 
-# --- 3. INTERFAZ Y NAVEGACIÓN ---
+# --- 3. INTERFAZ ---
 st.title("🚜 AgroMind 360")
-st.markdown("#### Inteligencia Agronómica Integral | Maule - Chile")
+st.markdown("#### Consultoría Agropecuaria de Precisión | Maule - Chile")
 st.write("---")
 
 with st.sidebar:
-    st.header("📍 1. Ubicación y Suelo")
-    reg_sel = st.selectbox("Región", list(chile_full.keys()), index=8) # Default Maule
+    st.header("📍 1. Localización y Suelo")
+    reg_sel = st.selectbox("Región", list(chile_full.keys()), index=8)
     prov_sel = st.selectbox("Provincia", list(chile_full[reg_sel]["Provincias"].keys()))
     comu_sel = st.selectbox("Comuna", chile_full[reg_sel]["Provincias"][prov_sel])
-    suelo_sel = st.selectbox("Tipo de Suelo", list(dict_suelos.keys()), index=1)
+    
+    st.divider()
+    # NUEVO: Subtipos de Suelo
+    suelo_sel = st.selectbox("Subtipo de Suelo (Textura)", list(dict_suelos.keys()), index=3)
     
     st.divider()
     st.header("🌱 2. Cultivo y Superficie")
     es_inv = st.checkbox("Cultivo en Invernadero")
     lista_actual = cultivos_inv if es_inv else cultivos_aire
     cultivo_sel = st.selectbox("Especie", list(lista_actual.keys()))
-    has = st.number_input("Hectáreas Totales (ha)", min_value=0.1, value=1.0, step=0.1)
+    has = st.number_input("Hectáreas (ha)", min_value=0.1, value=1.0, step=0.1)
     
     st.subheader("📐 Marco de Plantación")
     dist_h = st.number_input("Hileras (m)", value=lista_actual[cultivo_sel]["dist_h"], step=0.1)
@@ -81,28 +93,27 @@ with st.sidebar:
     sistema_sel = st.selectbox("Sistema", list(dict_riego.keys()))
 
 # --- 4. LÓGICA DE INGENIERÍA ---
-# Cálculo de Densidad de Plantación
+# Cálculos de Densidad
 densidad_ha = 10000 / (dist_h * dist_p)
 total_plantas = densidad_ha * has
 
 # Lógica de Riego
 et_base = chile_full[reg_sel]["ET"]
 kc = lista_actual[cultivo_sel]["kc"]
-frecuencia = dict_suelos[suelo_sel]["frecuencia"]
+frecuencia = dict_suelos[suelo_sel]["frec"]
 efi = dict_riego[sistema_sel]
 
-# ETc ajustada (Invernadero reduce 25% la demanda hídrica directa)
 etc = (et_base * 0.75 * kc) if es_inv else (et_base * kc)
-
-# Litros a reponer según el ciclo (Frecuencia)
 lamina_turno = (etc * frecuencia) / efi
 litros_turno = lamina_turno * 10 * has * 1000
-
-# Tiempo de riego corregido (Caudal del sistema x ha)
 horas_riego = litros_turno / (caudal_diseno[sistema_sel] * has)
 
-# --- 5. VISUALIZACIÓN DE RESULTADOS ---
-st.subheader(f"📊 Reporte Técnico AgroMind: {comu_sel}")
+# --- 5. RESULTADOS ---
+st.subheader(f"📊 Reporte de Ingeniería AgroMind: {comu_sel}")
+
+
+[Image of soil texture triangle]
+
 c1, c2, c3, c4 = st.columns(4)
 
 c1.metric("Población Total", f"{int(total_plantas):,} pl.")
@@ -110,7 +121,7 @@ c2.metric("Turno de Riego", f"{litros_turno:,.0f} L")
 c3.metric("Tiempo / Turno", f"{int(horas_riego*60)} min" if horas_riego < 1 else f"{horas_riego:.1f} h")
 c4.metric("Frecuencia", f"Cada {frecuencia} días")
 
-# --- 6. CALENDARIO Y ASESORÍA ---
+# --- 6. CALENDARIO Y NUTRICIÓN ---
 st.write("---")
 col_cal, col_nut = st.columns([2, 1])
 
@@ -122,17 +133,16 @@ with col_cal:
             t_str = f"{int(horas_riego*60)} min" if horas_riego < 1 else f"{horas_riego:.1f} h"
             st.write(f"💧 **{d}:** Toca Riego - Operar sistema por **{t_str}**.")
         else:
-            st.write(f"⚪ **{d}:** Descanso - Suelo con reserva de humedad.")
+            st.write(f"⚪ **{d}:** Descanso - Reserva de humedad en suelo {suelo_sel}.")
 
 with col_nut:
     st.warning("💊 Nutrición y Sanidad")
-    st.write(f"**Recomendación Específica:**")
+    st.write(f"**Manejo para {cultivo_sel}:**")
     st.write(f"- {lista_actual[cultivo_sel]['nut']}")
-    st.write(f"- Densidad calculada: {int(densidad_ha)} plantas por ha.")
-    st.write(f"**Análisis de Suelo:** {dict_suelos[suelo_sel]['desc']}")
+    st.write(f"- Densidad: {int(densidad_ha)} plantas/ha.")
+    st.info(f"📍 **Textura:** {dict_suelos[suelo_sel]['desc']}")
 
-# --- BOTÓN DE NEGOCIO ---
 st.divider()
-if st.button("💎 Generar Ficha Técnica AgroMind PRO"):
+if st.button("💎 Generar Certificado AgroMind PRO"):
     st.balloons()
-    st.write("Generando documento PDF... Esta función requiere suscripción activa.")
+    st.write("Generando informe... Disponible en versión Pro.")
